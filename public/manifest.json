@@ -1,0 +1,21 @@
+{
+  "manifest_version":3,
+"name":"My extension",
+"description":"just an extension",
+"version":"0.3",
+"action":{
+"default_popup":"index.html"
+},
+"permissions":[
+  "activeTab",
+  "storage",
+  "webNavigation",
+  "scripting",
+  "webRequest",
+  "declarativeNetRequest"
+],
+"host_permissions":[
+  "https://*/",
+  "http://*/"
+]
+}

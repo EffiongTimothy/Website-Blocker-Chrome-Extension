@@ -1,0 +1,22 @@
+/* *{
+  margin: 0;
+  margin-top: 50px;
+    height: 300px;
+    width: 350px;
+    background-color: rgb(0, 183, 255);
+    overflow-y: auto;
+}
+
+input{
+  height: 50px;
+  width: 70%;
+  margin-left: 50px;
+
+}
+button{
+  background-color: red;
+  height: 50px;
+  width: 50%;
+  margin-left: 10px;
+
+} */
