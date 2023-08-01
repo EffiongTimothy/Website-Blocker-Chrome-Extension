@@ -1,63 +1,93 @@
 import logo from "./logo.svg";
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import {generateHTML404,generateStyles} from "./errorpage";
+import { generateHTML404, generateStyles } from "./errorpage";
 
 function App() {
-  const [blocked, setBlocked] = useState(false);  
+  const [blocked, setBlocked] = useState(false);
   const [urlToBlock, setUrlToBlock] = useState("");
-  
 
-
-const isValidURL = (url) => {
+  const isValidURL = (url) => {
     const urlPattern = new RegExp(
       /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
     );
-  
 
-    console.log('approved site',urlPattern.test(url))
-    return urlPattern.test(url) 
-
+    console.log("approved site", urlPattern.test(url));
+    return urlPattern.test(url);
   };
 
-// Declare a variable to store the blocked websites
-let blockedWebsites = {};
 
-const blockSite = () => {
-  /* eslint-disable no-undef */
-  const urlToBlockFormatted = urlToBlock.trim();
-
-  if (!isValidURL(urlToBlockFormatted)) {
-    alert("Invalid URL. Please enter a valid website URL.");
-    return;
-  }
-
-  // Check if the website is already blocked
-  if (urlToBlockFormatted in blockedWebsites) {
-    alert(`${urlToBlockFormatted} is already blocked.`);
-    return;
-  }
-
-  const blockRuleId = Math.floor(Math.random() * 1000);
-
-  const blockRule = {
-    id: blockRuleId,
-    priority: 1,
-    action: {
-      type: "block",
-    },
-    condition: {
-      urlFilter: urlToBlockFormatted,
-    },
-  };
-
-  chrome.declarativeNetRequest.updateDynamicRules(
+// Function to inject the 404 page into the tab.
+const inject404Page = (tabId) => {
+      /*eslint-disable no-undef */
+  chrome.scripting.executeScript(
     {
-      removeRuleIds: [blockRuleId],
+      target: { tabId },
+      func: () => {
+        document.body.innerHTML = generateHTML404();
+        document.head.innerHTML = generateStyles();
+      },
     },
     () => {
+      console.log(`${tabId}: 404 page injected`);
+    }
+  );
+};
+
+// Function to check if a URL is blocked.
+const isURLBlocked = (url) => {
+      /*eslint-disable no-undef */
+  chrome.storage.sync.get("blockedWebsites", ({ blockedWebsites }) => {
+    if (blockedWebsites && blockedWebsites.includes(url)) {
+      console.log('the website is in storage',blockedWebsites.includes(url))
+      return blockedWebsites.includes(url);
+    }})
+};
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  console.log('tab object',tab);
+  console.log('chang info',changeInfo);
+  console.log('tab id that was found',tabId);
+  if (changeInfo.status === "complete"|| changeInfo.status === "loading") {
+    const url  = tab.url;
+    if (isURLBlocked(url)) {
+      inject404Page(tabId);
+    }
+  }
+});
+
+
+  const blockSite = () => {
+    /*eslint-disable no-undef */
+    const urlToBlockFormatted = urlToBlock.trim();
+
+    if (!isValidURL(urlToBlockFormatted)) {
+      alert("Invalid URL. Please enter a valid website URL.");
+      return;
+    }
+
+    chrome.storage.sync.get("blockedWebsites", ({ blockedWebsites }) => {
+      if (blockedWebsites && blockedWebsites.includes(urlToBlockFormatted)) {
+        alert(`${urlToBlockFormatted} is already blocked.`);
+        return;
+      }
+
+      const blockRuleId = Math.floor(Math.random() * 1000);
+
+      const blockRule = {
+        id: blockRuleId,
+        priority: 1,
+        action: {
+          type: "block",
+        },
+        condition: {
+          urlFilter: urlToBlockFormatted,
+        },
+      };
+
       chrome.declarativeNetRequest.updateDynamicRules(
         {
+          removeRuleIds: [blockRuleId],
           addRules: [blockRule],
         },
         () => {
@@ -67,51 +97,59 @@ const blockSite = () => {
               chrome.runtime.lastError.message
             );
           } else {
-            if (isValidURL(urlToBlockFormatted) === true) {
-              chrome.tabs.query({ url: urlToBlockFormatted }, (tabs) => {
+            chrome.tabs.query({ url: urlToBlockFormatted }, (tabs) => {
+              if (tabs.some((tab) => tab.url.includes(urlToBlockFormatted))) {
                 if (tabs.length === 0) {
                   alert(`The website you are trying to block is not open.`);
                   return;
                 }
                 const activeTab = tabs[0];
                 const activeTabId = activeTab.id;
-                console.log('this is the length of active tabs', tabs.length);
-                console.log('this is the generated id for site i want to block', blockRuleId);
-                console.log('this is the current tab id', activeTabId);
-                console.log('this the is the current tab url', activeTab);
-
-                chrome.scripting.executeScript(
-                  {
-                    target: { tabId: activeTabId },
-                    func: () => {
-                      document.body.innerHTML = generateHTML404();
-                      document.head.innerHTML = generateStyles();
-                    },
-                  },
-                  () => {
-                    alert(`${urlToBlock} is currently blocked`);
-                    
-                    blockedWebsites[urlToBlockFormatted] = blockRuleId;
+                console.log('first tab id from block',activeTabId)
+                inject404Page(activeTabId)
+                // chrome.scripting.executeScript(
+                //   {
+                //     target: { tabId: activeTabId },
+                //     func: () => {
+                //       document.body.innerHTML = generateHTML404();
+                //       document.head.innerHTML = generateStyles();
+                //     },
+                //   },
+                //   () => {
+                    alert(`${urlToBlockFormatted} is currently blocked`);
                     setBlocked(true);
-                  }
-                );
-              });
-            }
+
+                    chrome.storage.sync.get(
+                      "blockedWebsites",
+                      ({ blockedWebsites }) => {
+                        if (!blockedWebsites) {
+                          blockedWebsites = [];
+                        }
+                        blockedWebsites.push(urlToBlockFormatted);
+                        chrome.storage.sync.set({ blockedWebsites });
+                      }
+                    );
+                  //}
+                //);
+              } else {
+                alert(`The website you are trying to block is not open.`);
+              }
+            });
           }
         }
       );
-    }
-  );
-};
+    });
+  };
 
   const unblockSite = () => {
-    /* eslint-disable no-undef */
-    const urlToBlockFormatted = urlToBlock.trim();
+    /*eslint-disable no-undef */
+    const urlToUnblockFormatted = urlToBlock.trim();
 
-    if (!isValidURL(urlToBlockFormatted)) {
+    if (!isValidURL(urlToUnblockFormatted)) {
       alert("Invalid URL. Please enter a valid website URL.");
       return;
-    };
+    }
+
     chrome.declarativeNetRequest.getDynamicRules((rules) => {
       const blockedWebsites = rules.reduce((acc, rule) => {
         if (rule.action.type === "block") {
@@ -119,13 +157,13 @@ const blockSite = () => {
         }
         return acc;
       }, {});
-  
-      if (!(urlToBlockFormatted in blockedWebsites)) {
-        alert(`${urlToBlockFormatted} is not blocked`);
+
+      if (!(urlToUnblockFormatted in blockedWebsites)) {
+        alert(`${urlToUnblockFormatted} is not blocked`);
         return;
       }
-  
-      const unblockRuleId = blockedWebsites[urlToBlockFormatted];
+
+      const unblockRuleId = blockedWebsites[urlToUnblockFormatted];
       chrome.declarativeNetRequest.updateDynamicRules(
         {
           removeRuleIds: [unblockRuleId],
@@ -137,14 +175,26 @@ const blockSite = () => {
               chrome.runtime.lastError.message
             );
           } else {
-            alert(`${urlToBlockFormatted} is now unblocked! Reload this page!`);
+            alert(
+              `${urlToUnblockFormatted} is now unblocked! Reload this page!`
+            );
             setBlocked(false);
+
+            chrome.storage.sync.get(
+              "blockedWebsites",
+              ({ blockedWebsites }) => {
+                if (blockedWebsites) {
+                  blockedWebsites.pop();
+                  chrome.storage.sync.set({ blockedWebsites });
+                }
+              }
+            );
           }
         }
       );
     });
   };
-  
+
   const injectErrorPage = (tabId) => {
     chrome.scripting.executeScript(
       {
@@ -155,40 +205,45 @@ const blockSite = () => {
         },
       },
       () => {
-        setBlocked(true);
+        if (chrome.runtime.lastError) {
+          console.error("Script injection failed:", chrome.runtime.lastError);
+        } else {
+          console.log("Script injected successfully");
+        }
       }
     );
+    setBlocked(true);
   };
 
-
   useEffect(() => {
-    chrome.webNavigation.onCommitted.addListener((details) => {
-      if (blocked && details.tabId && details.url === urlToBlock) {
+    const navigationListener = (details) => {
+      if (blocked && details.tabId && details.url === urlToBlock.trim()) {
         injectErrorPage(details.tabId);
       }
-    });
+    };
+
+    chrome.webNavigation.onCommitted.addListener(navigationListener);
 
     return () => {
-      chrome.webNavigation.onCommitted.removeListener((details) => {
-        if (blocked && details.tabId && details.url === urlToBlock) {
-          injectErrorPage(details.tabId);
-        }
-      });
+      chrome.webNavigation.onCommitted.removeListener(navigationListener);
     };
   }, [blocked, urlToBlock]);
 
-  
-
   return (
     <div className="App">
+      <h1>WBE</h1>
+      <div className="inputs-box">
       <input
         type="text"
         value={urlToBlock}
         onChange={(e) => setUrlToBlock(e.target.value)}
         placeholder="Enter URL to block"
       />
-      <button onClick={blockSite}>Block</button>
-      <button onClick={unblockSite}>Unblock</button>
+      <div className="button-box">
+        <button onClick={blockSite}>Block</button>
+        <button onClick={unblockSite}>Unblock</button>
+      </div>
+    </div>
     </div>
   );
 }
