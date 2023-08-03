@@ -11,44 +11,50 @@ function App() {
     const urlPattern = new RegExp(
       /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
     );
-
     console.log("approved site", urlPattern.test(url));
     return urlPattern.test(url);
   };
 
 
-// Function to inject the 404 page into the tab.
 const inject404Page = (tabId) => {
       /*eslint-disable no-undef */
-  chrome.scripting.executeScript(
-    {
-      target: { tabId },
-      func: () => {
-        document.body.innerHTML = generateHTML404();
-        document.head.innerHTML = generateStyles();
-      },
-    },
-    () => {
-      console.log(`${tabId}: 404 page injected`);
-    }
-  );
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tabId },
+          func: () => {
+            document.body.innerHTML = generateHTML404();
+            document.head.innerHTML = generateStyles();
+          },
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            console.error("Script injection failed:", chrome.runtime.lastError);
+          } else {
+            console.log("Script injected successfully");
+          }
+        }
+      );
+      setBlocked(true);
 };
 
-// Function to check if a URL is blocked.
+
 const isURLBlocked = (url) => {
       /*eslint-disable no-undef */
   chrome.storage.sync.get("blockedWebsites", ({ blockedWebsites }) => {
     if (blockedWebsites && blockedWebsites.includes(url)) {
-      console.log('the website is in storage',blockedWebsites.includes(url))
+      console.log('the website is blocked in storage',blockedWebsites.includes(url))
       return blockedWebsites.includes(url);
     }})
 };
+
+
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   console.log('tab object',tab);
   console.log('chang info',changeInfo);
   console.log('tab id that was found',tabId);
-  if (changeInfo.status === "complete"|| changeInfo.status === "loading") {
+  if (changeInfo.status === "complete") {
+    console.log('the tab is relaoded');
     const url  = tab.url;
     if (isURLBlocked(url)) {
       inject404Page(tabId);
@@ -56,6 +62,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+function getDomainName(url) {
+  const urlObj = new URL(url);
+  console.log('url obj',);
+  console.log('from get domain name host name ', urlObj.hostname);
+  return urlObj.hostname;
+}
 
   const blockSite = () => {
     /*eslint-disable no-undef */
@@ -97,7 +109,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
               chrome.runtime.lastError.message
             );
           } else {
-            chrome.tabs.query({ url: urlToBlockFormatted }, (tabs) => {
+              chrome.tabs.query({ url: `*://${urlToBlockFormatted}/*` }, (tabs) => {
               if (tabs.some((tab) => tab.url.includes(urlToBlockFormatted))) {
                 if (tabs.length === 0) {
                   alert(`The website you are trying to block is not open.`);
@@ -107,15 +119,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                 const activeTabId = activeTab.id;
                 console.log('first tab id from block',activeTabId)
                 inject404Page(activeTabId)
-                // chrome.scripting.executeScript(
-                //   {
-                //     target: { tabId: activeTabId },
-                //     func: () => {
-                //       document.body.innerHTML = generateHTML404();
-                //       document.head.innerHTML = generateStyles();
-                //     },
-                //   },
-                //   () => {
+            
                     alert(`${urlToBlockFormatted} is currently blocked`);
                     setBlocked(true);
 
@@ -129,8 +133,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
                         chrome.storage.sync.set({ blockedWebsites });
                       }
                     );
-                  //}
-                //);
               } else {
                 alert(`The website you are trying to block is not open.`);
               }
@@ -195,39 +197,50 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     });
   };
 
-  const injectErrorPage = (tabId) => {
-    chrome.scripting.executeScript(
-      {
-        target: { tabId: tabId },
-        func: () => {
-          document.body.innerHTML = generateHTML404();
-          document.head.innerHTML = generateStyles();
-        },
-      },
-      () => {
-        if (chrome.runtime.lastError) {
-          console.error("Script injection failed:", chrome.runtime.lastError);
-        } else {
-          console.log("Script injected successfully");
-        }
-      }
-    );
-    setBlocked(true);
-  };
+  // const injectErrorPage = (tabId) => {
+  //   chrome.scripting.executeScript(
+  //     {
+  //       target: { tabId: tabId },
+  //       func: () => {
+  //         document.body.innerHTML = generateHTML404();
+  //         document.head.innerHTML = generateStyles();
+  //       },
+  //     },
+  //     () => {
+  //       if (chrome.runtime.lastError) {
+  //         console.error("Script injection failed:", chrome.runtime.lastError);
+  //       } else {
+  //         console.log("Script injected successfully");
+  //       }
+  //     }
+  //   );
+  //   setBlocked(true);
+  // };
 
-  useEffect(() => {
-    const navigationListener = (details) => {
-      if (blocked && details.tabId && details.url === urlToBlock.trim()) {
-        injectErrorPage(details.tabId);
-      }
-    };
+  // useEffect(() => {
+  //   const navigationListener = (details) => {
+  //     if (blocked && details.tabId && details.url === urlToBlock.trim()) {
+  //       injectErrorPage(details.tabId);
+  //     }
+  //   };
 
-    chrome.webNavigation.onCommitted.addListener(navigationListener);
+  //   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  //     console.log('tab object',tab);
+  //     console.log('chang info',changeInfo);
+  //     console.log('tab id that was found',tabId);
+  //     if (changeInfo.status === "complete"|| changeInfo.status === "loading") {
+  //       const url  = tab.url;
+  //       if (isURLBlocked(url)) {
+  //         inject404Page(tabId);
+  //       }
+  //     }
+  //   });
+  //   chrome.webNavigation.onCommitted.addListener(navigationListener);
 
-    return () => {
-      chrome.webNavigation.onCommitted.removeListener(navigationListener);
-    };
-  }, [blocked, urlToBlock]);
+  //   return () => {
+  //     chrome.webNavigation.onCommitted.removeListener(navigationListener);
+  //   };
+  // }, [blocked, urlToBlock]);
 
   return (
     <div className="App">
