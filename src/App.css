@@ -46,18 +46,37 @@ button{
 } */ 
 body {
   font-family: Arial, sans-serif;
+  background-color: #01240191;
   margin: 0;
-  padding: 20px;
+  padding: 5rem;
+  max-width: 300px;
+  max-height: 250px;
+  background-image:url('../src/image/Dark\ Green\ and\ Light\ Green\ Modern\ Gradient\ Health\ Products\ Health\ Logo\ \(4\)-fotor-bg-remover-2023072503554.png');
+background-size: contain;
+background-repeat: no-repeat;
+display: flex;
+justify-content: center;
+align-items: center;
 }
 
+.logo{
+  width: 90px;
+  height: 90px;
+  margin-left: 250px;
+}
+.top{
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+ 
+}
 .App {
-  max-width: 450px;
-  max-height: 450px;
-  margin: 0 auto;
-  background-color: #58f4ff;
+  width: 70vw;
+  height: 200px;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  
 }
 
 .App h1 {
@@ -70,21 +89,29 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  color: #ccc;
 }
 
 .inputs-box input {
   width: 100%;
+  height: 10vh;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  background-color: #1c66066e;
   margin-bottom: 10px;
   font-size: 16px;
+}
+input[type="text"]::placeholder {
+  color: #e4dfdf;
+
 }
 
 .button-box {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 30px;
 }
 
 .button-box button {
@@ -96,12 +123,12 @@ body {
 }
 
 .button-box button:nth-child(1) {
-  background-color: #5f7960c9;
+  background-color: #e96565;
   color: #fff;
 }
 
 .button-box button:nth-child(2) {
-  background-color: #000000;
+  background-color: #0b3a0dcc;
   color: #fff;
 }
 

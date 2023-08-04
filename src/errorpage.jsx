@@ -8,15 +8,15 @@ import React from "react";
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Error Page</title>
+        <title>BIME.</title>
         <link rel="stylesheet" href="styles.css">
     </head>
     <body>
         <div class="error-container">
-            <h1>Oops! This website is BLOCKED by SENIORMAN</h1>
+            <h1>Oops! This website is BLOCKED by BIME.</h1>
             <p>We apologize for the inconvenience, but it seems there was an error processing your request.</p>
-            <p>Please try again later or contact THE EXTENSION BOYS for assistance.</p>
-            <button class="back-btn">Go Back</button>
+            <p>Please try again later or contact BIME.(inc) for assistance.</p>
+            <p>www.bimeExtension.com</p>
         </div>
     </body>
     </html>
