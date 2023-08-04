@@ -1,6 +1,7 @@
-import logo from "./logo.svg";
-import "./App.css";
 import React, { useState, useEffect } from "react";
+import "./App.css";
+import logo from "../src/image/bimetrans.png";
+
 import { generateHTML404, generateStyles } from "./errorpage";
 
 function App() {
@@ -8,11 +9,15 @@ function App() {
   const [urlToBlock, setUrlToBlock] = useState("");
 
   const isValidURL = (url) => {
-    const urlPattern = new RegExp(
-      /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
-    );
-    console.log("approved site", urlPattern.test(url));
-    return urlPattern.test(url);
+    const domainPattern = /^(?!http:\/\/|https:\/\/)(\w+\.)?[a-zA-Z]{2,}(\.\w+)*$/;
+  
+    if (!domainPattern.test(url)) {
+      alert('invalid url pattern')
+      return false;
+    }
+    const modifiedUrl = `https://www.${url}`;
+    console.log("approved site", modifiedUrl);
+    return true;
   };
 
 
@@ -39,28 +44,40 @@ const inject404Page = (tabId) => {
 
 
 const isURLBlocked = (url) => {
-      /*eslint-disable no-undef */
-  chrome.storage.sync.get("blockedWebsites", ({ blockedWebsites }) => {
-    if (blockedWebsites && blockedWebsites.includes(url)) {
-      console.log('the website is blocked in storage',blockedWebsites.includes(url))
-      return blockedWebsites.includes(url);
-    }})
+  /*eslint-disable no-undef */
+  return new Promise((resolve) => {
+    chrome.storage.sync.get("blockedWebsites", ({ blockedWebsites }) => {
+      console.log(blockedWebsites);
+      for (let index = 0; index < blockedWebsites.length; index++) {
+        if (url.includes(blockedWebsites[index])) {
+          console.log('the website is blocked in storage',url.includes(blockedWebsites[index]));
+          resolve(true);
+          return;
+        }
+      }
+      resolve(false);
+    });
+  });
 };
 
 
 
+useEffect(() => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   console.log('tab object',tab);
   console.log('chang info',changeInfo);
   console.log('tab id that was found',tabId);
   if (changeInfo.status === "complete") {
-    console.log('the tab is relaoded');
     const url  = tab.url;
-    if (isURLBlocked(url)) {
-      inject404Page(tabId);
-    }
+    isURLBlocked(url).then((result) => { 
+      if (result) {
+        inject404Page(tabId);
+      }
+    });
   }
 });
+},[]);
+
 
 function getDomainName(url) {
   const urlObj = new URL(url);
@@ -244,13 +261,15 @@ function getDomainName(url) {
 
   return (
     <div className="App">
-      <h1>WBE</h1>
+      <div className="top">
+      <img className="logo" src={logo}></img>
+      </div>
       <div className="inputs-box">
       <input
         type="text"
         value={urlToBlock}
         onChange={(e) => setUrlToBlock(e.target.value)}
-        placeholder="Enter URL to block"
+        placeholder="Enter hostname e.g www.hostname.com"
       />
       <div className="button-box">
         <button onClick={blockSite}>Block</button>

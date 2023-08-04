@@ -1,10 +1,16 @@
 {
   "manifest_version":3,
-"name":"My extension",
-"description":"just an extension",
-"version":"0.3",
+"name":"Bime.",
+"description":"Website Blocker Chrome Extension built using React framework enables users to block and unblock websites for better control over their browsing experience.",
+"version":"1.1.0",
 "action":{
-"default_popup":"index.html"
+"default_popup":"index.html",
+"default_icon": {
+  "16": "asset/Logo/DarkGreenandLightGreenModern.png"
+}
+},
+"icons": {
+  "128": "asset/Logo/Dark Green and Light Green Modern Gradient Health Products Health Logo (6).png"
 },
 "permissions":[
   "activeTab",
