@@ -1,7 +1,7 @@
 {
   "manifest_version":3,
 "name":"Bime.",
-"description":"Website Blocker Chrome Extension built using React framework enables users to block and unblock websites for better control over their browsing experience.",
+"description":"Enable users to block and unblock websites for better control over their browsing experience.",
 "version":"1.1.0",
 "action":{
 "default_popup":"index.html",
