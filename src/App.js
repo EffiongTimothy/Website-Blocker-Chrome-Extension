@@ -15,9 +15,11 @@ function App() {
       alert('invalid url pattern')
       return false;
     }
+    else{
     const modifiedUrl = `https://www.${url}`;
     console.log("approved site", modifiedUrl);
     return true;
+    }
   };
 
 
@@ -65,7 +67,7 @@ const isURLBlocked = (url) => {
 useEffect(() => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   console.log('tab object',tab);
-  console.log('chang info',changeInfo);
+  console.log('change info',changeInfo);
   console.log('tab id that was found',tabId);
   if (changeInfo.status === "complete") {
     const url  = tab.url;
@@ -214,51 +216,7 @@ function getDomainName(url) {
     });
   };
 
-  // const injectErrorPage = (tabId) => {
-  //   chrome.scripting.executeScript(
-  //     {
-  //       target: { tabId: tabId },
-  //       func: () => {
-  //         document.body.innerHTML = generateHTML404();
-  //         document.head.innerHTML = generateStyles();
-  //       },
-  //     },
-  //     () => {
-  //       if (chrome.runtime.lastError) {
-  //         console.error("Script injection failed:", chrome.runtime.lastError);
-  //       } else {
-  //         console.log("Script injected successfully");
-  //       }
-  //     }
-  //   );
-  //   setBlocked(true);
-  // };
-
-  // useEffect(() => {
-  //   const navigationListener = (details) => {
-  //     if (blocked && details.tabId && details.url === urlToBlock.trim()) {
-  //       injectErrorPage(details.tabId);
-  //     }
-  //   };
-
-  //   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  //     console.log('tab object',tab);
-  //     console.log('chang info',changeInfo);
-  //     console.log('tab id that was found',tabId);
-  //     if (changeInfo.status === "complete"|| changeInfo.status === "loading") {
-  //       const url  = tab.url;
-  //       if (isURLBlocked(url)) {
-  //         inject404Page(tabId);
-  //       }
-  //     }
-  //   });
-  //   chrome.webNavigation.onCommitted.addListener(navigationListener);
-
-  //   return () => {
-  //     chrome.webNavigation.onCommitted.removeListener(navigationListener);
-  //   };
-  // }, [blocked, urlToBlock]);
-
+ 
   return (
     <div className="App">
       <div className="top">
@@ -269,7 +227,7 @@ function getDomainName(url) {
         type="text"
         value={urlToBlock}
         onChange={(e) => setUrlToBlock(e.target.value)}
-        placeholder="Enter hostname e.g www.hostname.com"
+        placeholder="www.hostname.com"
       />
       <div className="button-box">
         <button onClick={blockSite}>Block</button>
